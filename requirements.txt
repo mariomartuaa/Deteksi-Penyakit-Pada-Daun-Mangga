@@ -3,7 +3,7 @@ attr==0.3.2
 ConfigParser==7.0.0
 contextlib2==21.6.0
 cryptography==42.0.8
-Cython==3.0.10
+cython==3.0.10
 dl==0.1.0
 docutils==0.21.2
 HTMLParser==0.0.2
