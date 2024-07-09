@@ -23,34 +23,21 @@ def prediction(image, conf):
     res_plotted = result[0].plot()[:, :, ::-1]
     return res_plotted
 
-def login_user(username, password):
-    return username == "admin" and password == "admin"
-
 def delete_image(image_id):
     c.execute("DELETE FROM images WHERE id=?", (image_id,))
     conn.commit()
     st.experimental_rerun()
 
-def view_results_page():
-    st.title('Hasil Deteksi')
-    images = c.execute("SELECT id, image FROM images ORDER BY id DESC").fetchall()
-    for image_id, img in images:
-        st.image(img, caption=f'Hasil Deteksi #{image_id}')
-        col1, col2 = st.columns([1, 1])
-        with col1:
-            st.download_button("Download", img, file_name=f"Deteksi_Penyakit_{image_id}.png", mime="image/png")
-        with col2:
-            if st.button("Delete", key=f"delete_{image_id}"):
-                delete_image(image_id)
-
 def login_page():
     st.title('Login')
     username = st.text_input('Username')
     password = st.text_input('Password', type='password')
+    
     if st.button('Login'):
-        if login_user(username, password):
+        if username == "admin" and password == "admin":
+            st.success('Login berhasil!')
             st.session_state['logged_in'] = True
-            st.experimental_rerun()
+            st.session_state['page'] = 'Home'
         else:
             st.error('Username atau password salah')
 
@@ -83,16 +70,35 @@ def main_page():
             c.execute("INSERT INTO images (tab, image) VALUES (?, ?)", ('upload', img_bytes))
             conn.commit()
 
+def view_results_page():
+    st.title('Hasil Deteksi')
+    images = c.execute("SELECT id, image FROM images ORDER BY id DESC").fetchall()
+    for image_id, img in images:
+        st.image(img, caption=f'Hasil Deteksi #{image_id}')
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            st.download_button("Download", img, file_name=f"Deteksi_Penyakit_{image_id}.png", mime="image/png")
+        with col2:
+            if st.button("Delete", key=f"delete_{image_id}"):
+                delete_image(image_id)
+
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
+if 'page' not in st.session_state:
+    st.session_state['page'] = 'Home'
 
 if st.session_state['logged_in']:
-    page = st.sidebar.selectbox("Navigasi", ["Home", "Hasil Deteksi"])
-    if page == "Home":
+    st.sidebar.title('Navigasi')
+    if st.sidebar.button('Home'):
+        st.session_state['page'] = 'Home'
+    if st.sidebar.button('Hasil Deteksi'):
+        st.session_state['page'] = 'Hasil Deteksi'
+
+    if st.session_state['page'] == 'Home':
         main_page()
-    elif page == "Hasil Deteksi":
+    elif st.session_state['page'] == 'Hasil Deteksi':
         view_results_page()
 else:
     login_page()
-
+    
 conn.close()
